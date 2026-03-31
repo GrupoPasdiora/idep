@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PPER / IDEP-RO — Painel de Comando PROPAG</title>
+<style>
+:root {
+  --bg: #f0f3f7;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --teal: #00897b;
+  --teal-light: #e0f2f1;
+  --teal-bg: #f1faf9;
+  --red: #c62828;
+  --red-bg: #fef2f2;
+  --amber: #e65100;
+  --amber-bg: #fff8e1;
+  --green: #2e7d32;
+  --green-bg: #f1f8e9;
+  --text: #1a2332;
+  --text2: #37474f;
+  --muted: #78909c;
+  --border: #e2e8f0;
+  --navy: #0d1b2a;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slideIn { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes grow { from { width: 0 } }
+@keyframes blink { 0%,100%{ opacity:1 } 50%{ opacity:.3 } }
+
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 16px; }
+.header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.header-label { font-size: 8px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
+.header-title { font-size: 19px; font-weight: 800; color: var(--navy); margin-top: 2px; }
+.header-title span { color: var(--teal); }
+.header-sub { font-size: 9px; color: var(--muted); margin-top: 1px; }
+
+.meta-box { background: var(--teal-light); border-radius: 10px; padding: 8px 12px; text-align: right; }
+.meta-label { font-size: 8px; color: var(--teal); font-weight: 700; letter-spacing: 1px; }
+.meta-value { font-size: 22px; font-weight: 800; color: var(--teal); }
+.meta-sub { font-size: 8px; color: var(--muted); }
+
+.progress-bar { margin-top: 10px; height: 6px; border-radius: 3px; background: #e8f5e9; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--teal), var(--green)); animation: grow 1s ease; }
+.progress-labels { display: flex; justify-content: space-between; font-size: 8px; color: var(--muted); margin-top: 3px; }
+.progress-labels .today { color: var(--amber); font-weight: 700; }
+
+.kpis { display: flex; gap: 8px; margin-top: 10px; }
+.kpi { flex: 1; border-radius: 8px; padding: 8px; text-align: center; }
+.kpi-label { font-size: 7px; color: var(--muted); }
+.kpi-value { font-size: 14px; font-weight: 800; margin-top: 2px; }
+
+.tabs { display: flex; gap: 3px; margin-top: 10px; background: var(--bg); border-radius: 10px; padding: 3px; }
+.tab { flex: 1; padding: 8px 4px; border: none; border-radius: 8px; font-size: 10px; font-weight: 700; cursor: pointer; background: transparent; color: var(--muted); transition: all 0.2s; }
+.tab.active { background: var(--teal); color: #fff; }
+
+.main { padding: 12px 16px 80px; }
+.section-hidden { display: none; }
+.section-visible { display: block; animation: fadeIn 0.3s; }
+
+.sec { display: flex; align-items: center; gap: 6px; margin: 4px 0 8px; }
+.sec-bar { width: 3px; height: 13px; border-radius: 2px; background: var(--teal); }
+.sec-title { font-size: 11px; font-weight: 700; color: var(--text); }
+
+/* Escolas moveis */
+.moveis-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 14px; }
+.movel-card { min-width: 145px; background: var(--card); border-radius: 10px; padding: 10px; border: 1px solid var(--border); flex-shrink: 0; }
+.movel-status { display: flex; align-items: center; gap: 4px; margin-bottom: 5px; }
+.movel-dot { width: 6px; height: 6px; border-radius: 50%; }
+.movel-dot.on { animation: blink 2s infinite; }
+.movel-label { font-size: 8px; font-weight: 700; }
+.movel-nome { font-size: 11px; font-weight: 700; }
+.movel-local { font-size: 9px; color: var(--muted); margin-top: 2px; }
+.movel-alunos { font-size: 9px; color: var(--teal); font-weight: 600; margin-top: 3px; }
+
+/* Municipio cards */
+.mun-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 5px; cursor: pointer; transition: border-color 0.15s; }
+.mun-card.open { border-color: var(--teal); }
+.mun-top { display: flex; justify-content: space-between; align-items: center; }
+.mun-name { font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 5px; }
+.mun-polo { font-size: 9px; color: var(--muted); }
+.mun-pct { font-size: 15px; font-weight: 800; }
+.mun-ratio { font-size: 8px; color: var(--muted); }
+.mun-bar { height: 3px; border-radius: 2px; margin-top: 6px; }
+.mun-bar-fill { height: 100%; border-radius: 2px; }
+.mun-detail { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 9px; display: none; }
+.mun-card.open .mun-detail { display: grid; animation: fadeIn 0.2s; }
+.mun-alert { margin-top: 8px; padding: 8px; background: var(--red-bg); border-radius: 6px; font-size: 9px; color: var(--red); grid-column: span 2; }
+.inf-label { color: var(--muted); }
+.inf-value { font-weight: 700; }
+
+/* Cursos */
+.filtros { display: flex; gap: 6px; margin-bottom: 12px; }
+.filtro-btn { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; background: var(--card); color: var(--muted); }
+.filtro-btn.active { border-color: var(--teal); background: var(--teal-light); color: var(--teal); }
+.curso-card { background: var(--card); border-radius: 10px; padding: 11px 12px; border: 1px solid var(--border); margin-bottom: 5px; }
+.curso-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.curso-nome { font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.curso-tag { font-size: 7px; font-weight: 700; color: var(--teal); background: var(--teal-light); padding: 1px 5px; border-radius: 3px; }
+.curso-local { font-size: 8px; color: var(--muted); margin-top: 2px; }
+.curso-mat { text-align: right; flex-shrink: 0; }
+.curso-mat-num { font-size: 14px; font-weight: 800; }
+.curso-mat-label { font-size: 7px; color: var(--muted); }
+.curso-stats { display: flex; gap: 10px; margin-top: 6px; font-size: 9px; }
+
+/* Protocolo */
+.proto-card { display: flex; align-items: center; gap: 10px; border-radius: 8px; padding: 10px 12px; margin-bottom: 5px; border-left: 3px solid; }
+.proto-info { flex: 1; }
+.proto-label { font-size: 10px; font-weight: 700; }
+.proto-acao { font-size: 9px; color: var(--text2); margin-top: 1px; }
+.proto-tag { font-size: 8px; font-weight: 700; color: #fff; border-radius: 4px; padding: 2px 6px; }
+
+.audit-note { background: var(--teal-bg); border-radius: 8px; padding: 9px 12px; border: 1px solid rgba(0,137,123,0.2); margin: 4px 0 14px; font-size: 9px; color: var(--text2); line-height: 1.5; }
+
+.alert-box { border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+.alert-title { font-size: 11px; font-weight: 700; }
+.alert-text { font-size: 9px; color: var(--text2); line-height: 1.5; margin-top: 3px; }
+
+/* Aluno risco */
+.aluno-card { background: var(--card); border-radius: 10px; padding: 12px; border: 1px solid var(--border); margin-bottom: 6px; }
+.aluno-top { display: flex; justify-content: space-between; }
+.aluno-id { font-size: 12px; font-weight: 700; font-family: monospace; }
+.aluno-curso { font-size: 9px; color: var(--muted); margin-top: 1px; }
+.aluno-risco { text-align: center; border-radius: 6px; padding: 3px 8px; }
+.aluno-risco-num { font-size: 14px; font-weight: 800; }
+.aluno-risco-label { font-size: 7px; font-weight: 600; }
+.aluno-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 6px; font-size: 9px; }
+.aluno-proto { margin-top: 6px; padding: 6px 8px; border-radius: 6px; font-size: 9px; }
+
+/* Impacto fiscal */
+.fiscal { background: var(--card); border-radius: 10px; padding: 14px; border: 1px solid var(--border); margin-top: 12px; }
+.fiscal-title { font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+.fiscal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fiscal-label { font-size: 8px; color: var(--muted); }
+.fiscal-num { font-size: 18px; font-weight: 800; }
+.fiscal-full { grid-column: span 2; padding-top: 6px; border-top: 1px solid var(--border); }
+.fiscal-big { font-size: 20px; font-weight: 800; color: var(--red); }
+.fiscal-ref { margin-top: 6px; font-size: 8px; color: var(--muted); }
+
+/* Relatorio */
+.rel-card { background: var(--card); border-radius: 10px; padding: 14px; border: 1px solid var(--border); margin-bottom: 12px; }
+.rel-intro { font-size: 9px; color: var(--text2); line-height: 1.6; margin-bottom: 10px; }
+.rel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 12px; }
+.rel-item { background: var(--bg); border-radius: 6px; padding: 6px 8px; }
+.rel-item-label { font-size: 7px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.rel-item-value { font-size: 9px; font-weight: 600; color: var(--text); }
+.btn-gerar { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--teal); color: #fff; font-size: 11px; font-weight: 800; cursor: pointer; }
+.btn-gerar.done { background: var(--green); }
+
+/* Report preview */
+.report { background: #fff; color: #1a1a1a; border-radius: 10px; padding: 18px; border: 1px solid var(--border); box-shadow: 0 2px 12px rgba(0,0,0,0.06); animation: fadeIn 0.3s; margin-bottom: 12px; }
+.report-header { text-align: center; margin-bottom: 12px; }
+.report-gov { font-size: 8px; color: #888; letter-spacing: 2px; text-transform: uppercase; }
+.report-title { font-size: 13px; font-weight: 800; margin-top: 4px; }
+.report-sub { font-size: 10px; font-weight: 600; color: #555; }
+.report-dest { font-size: 8px; color: #888; margin-top: 2px; }
+.report-section { border-top: 1px solid #ddd; padding: 5px 0 3px; font-size: 10px; font-weight: 700; }
+.report-section:first-of-type { border-top: 2px solid #111; }
+.report-text { font-size: 9px; color: #333; line-height: 1.6; margin: 6px 0 10px; }
+.report table { width: 100%; font-size: 8px; border-collapse: collapse; margin: 4px 0; }
+.report th { text-align: right; padding: 2px 3px; color: #666; border-bottom: 1px solid #ccc; }
+.report th:first-child { text-align: left; }
+.report td { padding: 2px 3px; border-bottom: 1px solid #f0f0f0; }
+.report td:not(:first-child) { text-align: right; }
+.report-note { font-size: 7px; color: #999; font-style: italic; }
+.report-footer { margin-top: 10px; padding: 7px; background: #f5f5f5; border-radius: 6px; font-size: 8px; color: #666; }
+
+/* Checklist */
+.check-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.check-item:last-child { border-bottom: none; }
+.check-icon { width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; }
+.check-icon.ok { background: var(--green); color: #fff; }
+.check-icon.pending { background: var(--amber-bg); color: var(--amber); }
+.check-text { font-size: 9px; }
+.check-text.ok { color: var(--text); }
+.check-text.pending { color: var(--muted); }
+
+.footer-badge {
+  position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 5px 14px; font-size: 8px; color: var(--muted); font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  z-index: 100;
+}
+
+.kpi-row { display: flex; gap: 6px; margin-bottom: 12px; }
+.kpi2 { flex: 1; background: var(--card); border-radius: 8px; padding: 8px; text-align: center; border: 1px solid var(--border); }
+.kpi2-label { font-size: 7px; color: var(--muted); }
+.kpi2-value { font-size: 15px; font-weight: 800; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-top">
+    <div>
+      <div class="header-label">Programa de Permanência e Êxito com Rastreabilidade</div>
+      <h1 class="header-title">PPER <span>/ IDEP-RO</span></h1>
+      <div class="header-sub">Painel de Comando • PROPAG LC 212/2025</div>
+    </div>
+    <div class="meta-box">
+      <div class="meta-label">META PROPAG</div>
+      <div class="meta-value" id="metaPct"></div>
+      <div class="meta-sub" id="metaRatio"></div>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-labels"><span>Jan 2026</span><span class="today">Hoje</span><span>Dez 2026</span></div>
+  <div class="kpis">
+    <div class="kpi" style="background:var(--teal-bg)"><div class="kpi-label">Matrículas ativas</div><div class="kpi-value" id="kpiMat" style="color:var(--teal)"></div></div>
+    <div class="kpi" style="background:var(--red-bg)"><div class="kpi-label">Alunos em risco</div><div class="kpi-value" id="kpiRisco" style="color:var(--red)"></div></div>
+    <div class="kpi" style="background:var(--green-bg)"><div class="kpi-label">Esc. Móveis ativas</div><div class="kpi-value" id="kpiMoveis" style="color:var(--green)"></div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('comando',this)">Comando</button>
+    <button class="tab" onclick="showTab('cursos',this)">Cursos EPT</button>
+    <button class="tab" onclick="showTab('permanencia',this)">Permanência</button>
+    <button class="tab" onclick="showTab('relatorio',this)">Prestação</button>
+  </div>
+</header>
+
+<main class="main">
+  <div id="tab-comando" class="section-visible"></div>
+  <div id="tab-cursos" class="section-hidden"></div>
+  <div id="tab-permanencia" class="section-hidden"></div>
+  <div id="tab-relatorio" class="section-hidden"></div>
+</main>
+
+<div class="footer-badge">Demonstração Técnica — PPER / IDEP • GrupoPasdiora</div>
+
+<script>
+// ===== DATA =====
+const MUNICIPIOS = [
+  { name:"Porto Velho", meta:420, atual:287, risco:14, polo:"ETEC Sede — Av. Tiradentes, 3009", tipo:"fixo" },
+  { name:"Ji-Paraná", meta:180, atual:134, risco:9, polo:"Polo Descentralizado Ji-Paraná", tipo:"fixo" },
+  { name:"Ariquemes", meta:120, atual:98, risco:5, polo:"Polo Descentralizado Ariquemes", tipo:"fixo" },
+  { name:"Vilhena", meta:95, atual:89, risco:2, polo:"Polo Descentralizado Vilhena", tipo:"fixo" },
+  { name:"Cacoal", meta:110, atual:72, risco:11, polo:"Polo Descentralizado Cacoal", tipo:"fixo" },
+  { name:"Rolim de Moura", meta:75, atual:41, risco:8, polo:"Polo Descentralizado Rolim", tipo:"fixo" },
+  { name:"Guajará-Mirim", meta:60, atual:52, risco:3, polo:"Polo Descentralizado Guajará", tipo:"fixo" },
+  { name:"Jaru", meta:55, atual:38, risco:7, polo:"Polo Descentralizado Jaru", tipo:"fixo" },
+  { name:"Ouro Preto d'Oeste", meta:50, atual:44, risco:2, polo:"Polo Descentralizado Ouro Preto", tipo:"fixo" },
+  { name:"Pimenta Bueno", meta:65, atual:61, risco:1, polo:"CENTEC Abaitará (Zona Rural)", tipo:"fixo" },
+  { name:"Machadinho d'Oeste", meta:35, atual:18, risco:5, polo:"Escola Móvel — Informática", tipo:"movel" },
+  { name:"Espigão d'Oeste", meta:40, atual:29, risco:3, polo:"Escola Móvel — Máq. Agrícolas", tipo:"movel" },
+  { name:"Buritis", meta:35, atual:22, risco:6, polo:"Escola Móvel — Imagem Pessoal", tipo:"movel" },
+  { name:"Nova Mamoré", meta:28, atual:15, risco:4, polo:"Escola Móvel — Panificação", tipo:"movel" },
+  { name:"Colorado d'Oeste", meta:30, atual:28, risco:1, polo:"Polo Descentralizado Colorado", tipo:"fixo" },
+];
+
+const MOVEIS = [
+  { nome:"Informática", local:"Machadinho d'Oeste", status:"operando", alunos:42 },
+  { nome:"Imagem Pessoal", local:"Buritis", status:"operando", alunos:38 },
+  { nome:"Panificação e Confeitaria", local:"Nova Mamoré → Costa Marques", status:"transito", alunos:0 },
+  { nome:"Máquinas Agrícolas", local:"São Fco. do Guaporé", status:"operando", alunos:35 },
+  { nome:"Mecânica de Motocicletas", local:"Cujubim", status:"manutencao", alunos:0 },
+  { nome:"Frigorífico e Piscicultura", local:"Pres. Médici", status:"operando", alunos:29 },
+];
+
+const CURSOS = [
+  { nome:"Tec. em Informática", tipo:"tecnico", local:"ETEC Sede", turno:"Manhã", mat:120, conc:48, risco:11 },
+  { nome:"Tec. em Administração", tipo:"tecnico", local:"ETEC Sede", turno:"Noite", mat:110, conc:42, risco:14 },
+  { nome:"Tec. em Seg. do Trabalho", tipo:"tecnico", local:"ETEC Sede", turno:"Noite", mat:95, conc:38, risco:8 },
+  { nome:"Tec. em Marketing", tipo:"tecnico", local:"ETEC Sede", turno:"Manhã", mat:85, conc:31, risco:7 },
+  { nome:"Tec. em Logística", tipo:"tecnico", local:"Polo Rio Branco", turno:"Noite", mat:78, conc:29, risco:9 },
+  { nome:"Tec. em Comércio", tipo:"tecnico", local:"Polo Flora Calheiros", turno:"Tarde", mat:72, conc:25, risco:10 },
+  { nome:"Tec. em Eventos", tipo:"tecnico", local:"ETEC Sede", turno:"Manhã", mat:58, conc:22, risco:4 },
+  { nome:"Tec. em Guia de Turismo", tipo:"tecnico", local:"ETEC Sede", turno:"Tarde", mat:52, conc:18, risco:3 },
+  { nome:"Tec. em Secretaria Escolar", tipo:"tecnico", local:"Polo Rio Branco", turno:"Manhã", mat:48, conc:16, risco:5 },
+  { nome:"Tec. em Recursos Humanos", tipo:"tecnico", local:"ETEC Sede", turno:"Noite", mat:45, conc:14, risco:6 },
+  { nome:"Tec. em Contabilidade", tipo:"tecnico", local:"Polo Flora Calheiros", turno:"Noite", mat:42, conc:12, risco:5 },
+  { nome:"Tec. em Meio Ambiente", tipo:"tecnico", local:"ETEC Sede", turno:"Tarde", mat:38, conc:11, risco:3 },
+  { nome:"Tec. em Agroecologia", tipo:"tecnico", local:"CENTEC Abaitará", turno:"Integral", mat:55, conc:28, risco:2 },
+  { nome:"Tec. em Agropecuária", tipo:"tecnico", local:"CENTEC Abaitará", turno:"Integral", mat:50, conc:25, risco:2 },
+  { nome:"Tec. em Zootecnia", tipo:"tecnico", local:"CENTEC Abaitará", turno:"Integral", mat:40, conc:18, risco:1 },
+  { nome:"Operador de Drone", tipo:"qualificacao", local:"ETEC Sede", turno:"Tarde", mat:48, conc:45, risco:1 },
+  { nome:"Programador Web", tipo:"qualificacao", local:"Polo Flora Calheiros", turno:"Manhã", mat:46, conc:38, risco:3 },
+  { nome:"Intro. à Inteligência Artificial", tipo:"qualificacao", local:"ETEC Sede", turno:"Tarde", mat:50, conc:44, risco:2 },
+  { nome:"Assistente Administrativo", tipo:"qualificacao", local:"Polo Rio Branco", turno:"Manhã", mat:50, conc:46, risco:2 },
+  { nome:"Assistente Financeiro", tipo:"qualificacao", local:"ETEC Sede", turno:"Noite", mat:48, conc:42, risco:3 },
+  { nome:"Eletricista Instalador Predial", tipo:"qualificacao", local:"Polo Rio Branco", turno:"Noite", mat:35, conc:30, risco:2 },
+  { nome:"Excel Avançado", tipo:"qualificacao", local:"ETEC Sede", turno:"Noite", mat:50, conc:48, risco:0 },
+];
+
+const ALUNOS = [
+  { id:"EPT-2847", curso:"Tec. em Administração", polo:"ETEC Sede (PVH)", freq:42, risco:94, dias:12, nivel:3 },
+  { id:"EPT-1923", curso:"Tec. em Informática", polo:"Polo Flora Calheiros", freq:51, risco:88, dias:8, nivel:3 },
+  { id:"EPT-3651", curso:"Tec. em Seg. do Trabalho", polo:"Polo Rio Branco", freq:55, risco:85, dias:7, nivel:2 },
+  { id:"EPT-0784", curso:"Tec. em Logística", polo:"Polo Rio Branco", freq:48, risco:82, dias:10, nivel:3 },
+  { id:"EPT-4192", curso:"Tec. em Comércio", polo:"Flora Calheiros", freq:60, risco:76, dias:5, nivel:2 },
+  { id:"EPT-2068", curso:"Tec. em Recursos Humanos", polo:"ETEC Sede (PVH)", freq:58, risco:73, dias:6, nivel:2 },
+  { id:"EPT-5517", curso:"Tec. em Marketing", polo:"ETEC Sede (PVH)", freq:63, risco:71, dias:4, nivel:1 },
+  { id:"EPT-3390", curso:"Tec. em Contabilidade", polo:"Flora Calheiros", freq:61, risco:68, dias:5, nivel:1 },
+];
+
+const PROTO = {
+  1: { label:"Nível 1 — Alerta automático", acao:"Mensagem WhatsApp enviada ao aluno", cor:"var(--amber)", bg:"var(--amber-bg)", tag:"Automático" },
+  2: { label:"Nível 2 — Contato humano", acao:"Coordenador do polo deve ligar em 24h", cor:"#e65100", bg:"#fff3e0", tag:"Manual" },
+  3: { label:"Nível 3 — Ação presencial", acao:"Visita domiciliar ou encaminhamento CRAS", cor:"var(--red)", bg:"var(--red-bg)", tag:"Urgente" },
+};
+
+// ===== COMPUTED =====
+const totalMeta = MUNICIPIOS.reduce((s,m)=>s+m.meta,0);
+const totalAtual = MUNICIPIOS.reduce((s,m)=>s+m.atual,0);
+const totalRisco = MUNICIPIOS.reduce((s,m)=>s+m.risco,0);
+const pct = ((totalAtual/totalMeta)*100).toFixed(1);
+const moveisAtivas = MOVEIS.filter(e=>e.status==="operando").length;
+
+// ===== HEADER FILL =====
+document.getElementById('metaPct').textContent = pct + '%';
+document.getElementById('metaRatio').textContent = totalAtual.toLocaleString('pt-BR') + '/' + totalMeta.toLocaleString('pt-BR');
+document.getElementById('progressFill').style.width = pct + '%';
+document.getElementById('kpiMat').textContent = totalAtual.toLocaleString('pt-BR');
+document.getElementById('kpiRisco').textContent = totalRisco;
+document.getElementById('kpiMoveis').textContent = moveisAtivas + '/6';
+
+// ===== TAB LOGIC =====
+function showTab(id, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  ['comando','cursos','permanencia','relatorio'].forEach(t => {
+    document.getElementById('tab-'+t).className = t===id ? 'section-visible' : 'section-hidden';
+  });
+}
+
+// ===== RENDER COMANDO =====
+function renderComando() {
+  let h = '<div class="sec"><div class="sec-bar"></div><span class="sec-title">Escolas Móveis — Educação sobre Rodas</span></div>';
+  h += '<div class="moveis-scroll">';
+  MOVEIS.forEach(e => {
+    const cor = e.status==='operando' ? 'var(--green)' : e.status==='transito' ? 'var(--amber)' : 'var(--red)';
+    const bg = e.status==='operando' ? 'var(--green-bg)' : e.status==='transito' ? 'var(--amber-bg)' : 'var(--red-bg)';
+    const sl = e.status==='operando' ? 'Operando' : e.status==='transito' ? 'Em trânsito' : 'Manutenção';
+    h += `<div class="movel-card">
+      <div class="movel-status"><span class="movel-dot ${e.status==='operando'?'on':''}" style="background:${cor}"></span><span class="movel-label" style="color:${cor}">${sl}</span></div>
+      <div class="movel-nome">${e.nome}</div>
+      <div class="movel-local">${e.local}</div>
+      ${e.alunos>0?`<div class="movel-alunos">${e.alunos} alunos ativos</div>`:''}
+    </div>`;
+  });
+  h += '</div>';
+
+  h += '<div class="sec"><div class="sec-bar"></div><span class="sec-title">Municípios — Progresso Meta EPT</span></div>';
+  MUNICIPIOS.forEach((m,i) => {
+    const p = ((m.atual/m.meta)*100).toFixed(0);
+    const cor = p>=90?'var(--green)':p>=60?'var(--amber)':'var(--red)';
+    h += `<div class="mun-card" onclick="this.classList.toggle('open')" style="animation:slideIn 0.2s ease ${i*0.02}s both">
+      <div class="mun-top">
+        <div><div class="mun-name">${m.tipo==='movel'?'🚛 ':''}${m.name}</div><div class="mun-polo">${m.polo}</div></div>
+        <div style="text-align:right"><div class="mun-pct" style="color:${cor}">${p}%</div><div class="mun-ratio">${m.atual}/${m.meta}</div></div>
+      </div>
+      <div class="mun-bar" style="background:${cor}20"><div class="mun-bar-fill" style="width:${Math.min(p,100)}%;background:${cor}"></div></div>
+      <div class="mun-detail">
+        <div><span class="inf-label">Faltam p/ meta: </span><span class="inf-value" style="color:var(--amber)">${m.meta-m.atual}</span></div>
+        <div><span class="inf-label">Em risco: </span><span class="inf-value" style="color:${m.risco>5?'var(--red)':'var(--green)'}">${m.risco} alunos</span></div>
+        <div><span class="inf-label">Projeção dez: </span><span class="inf-value" style="color:var(--teal)">${Math.min(m.meta,Math.round(m.atual*1.6))}</span></div>
+        <div><span class="inf-label">Protocolo: </span><span class="inf-value" style="color:${m.risco>5?'var(--red)':'var(--teal)'}">${m.risco>5?'Nível 2-3':'Nível 1'}</span></div>
+        ${m.risco>5?`<div class="mun-alert">⚠ ${m.risco} alunos com risco elevado. Intervenção ativa em andamento.</div>`:''}
+      </div>
+    </div>`;
+  });
+  document.getElementById('tab-comando').innerHTML = h;
+}
+
+// ===== RENDER CURSOS =====
+let filtroAtual = 'todos';
+function renderCursos(filtro) {
+  filtroAtual = filtro || filtroAtual;
+  const lista = filtroAtual==='todos' ? CURSOS : CURSOS.filter(c=>c.tipo===filtroAtual);
+  const tMat = CURSOS.reduce((s,c)=>s+c.mat,0);
+  const tConc = CURSOS.reduce((s,c)=>s+c.conc,0);
+  const tR = CURSOS.reduce((s,c)=>s+c.risco,0);
+
+  let h = '<div class="sec"><div class="sec-bar"></div><span class="sec-title">Cursos Ofertados — IDEP Rondônia 2026</span></div>';
+  h += `<div class="kpi-row">
+    <div class="kpi2"><div class="kpi2-label">Total matrículas</div><div class="kpi2-value" style="color:var(--teal)">${tMat}</div></div>
+    <div class="kpi2"><div class="kpi2-label">Concluídos</div><div class="kpi2-value" style="color:var(--green)">${tConc}</div></div>
+    <div class="kpi2"><div class="kpi2-label">Em risco</div><div class="kpi2-value" style="color:var(--red)">${tR}</div></div>
+  </div>`;
+
+  const nTec = CURSOS.filter(c=>c.tipo==='tecnico').length;
+  const nQual = CURSOS.filter(c=>c.tipo==='qualificacao').length;
+  h += `<div class="filtros">
+    <button class="filtro-btn ${filtroAtual==='todos'?'active':''}" onclick="renderCursos('todos')">Todos (${CURSOS.length})</button>
+    <button class="filtro-btn ${filtroAtual==='tecnico'?'active':''}" onclick="renderCursos('tecnico')">Técnicos (${nTec})</button>
+    <button class="filtro-btn ${filtroAtual==='qualificacao'?'active':''}" onclick="renderCursos('qualificacao')">Qualificação (${nQual})</button>
+  </div>`;
+
+  lista.forEach((c,i) => {
+    const pConc = c.mat>0 ? ((c.conc/c.mat)*100).toFixed(0) : 0;
+    h += `<div class="curso-card" style="animation:slideIn 0.2s ease ${i*0.02}s both">
+      <div class="curso-top">
+        <div><div class="curso-nome">${c.nome} ${c.tipo==='qualificacao'?'<span class="curso-tag">QUALIF.</span>':''}</div><div class="curso-local">${c.local} • ${c.turno}</div></div>
+        <div class="curso-mat"><div class="curso-mat-num">${c.mat}</div><div class="curso-mat-label">matrículas</div></div>
+      </div>
+      <div class="curso-stats">
+        <span style="color:var(--green)">✓ ${c.conc} concluídos (${pConc}%)</span>
+        ${c.risco>0?`<span style="color:${c.risco>8?'var(--red)':'var(--amber)'}">⚠ ${c.risco} em risco</span>`:''}
+      </div>
+    </div>`;
+  });
+  document.getElementById('tab-cursos').innerHTML = h;
+}
+
+// ===== RENDER PERMANÊNCIA =====
+function renderPermanencia() {
+  let h = '<div class="sec"><div class="sec-bar"></div><span class="sec-title">Protocolo de Intervenção — PPER</span></div>';
+  [1,2,3].forEach(n => {
+    const p = PROTO[n];
+    h += `<div class="proto-card" style="background:${p.bg};border-left-color:${p.cor}">
+      <div class="proto-info"><div class="proto-label" style="color:${p.cor}">${p.label}</div><div class="proto-acao">${p.acao}</div></div>
+      <span class="proto-tag" style="background:${p.cor}">${p.tag}</span>
+    </div>`;
+  });
+  h += '<div class="audit-note">Cada ação gera <strong style="color:var(--teal)">registro com data, hora, responsável e resultado</strong> — rastreável para auditoria TCE-RO.</div>';
+
+  h += `<div class="alert-box" style="background:var(--red-bg);border:1px solid rgba(198,40,40,0.2)">
+    <div class="alert-title" style="color:var(--red)">⚠ ${ALUNOS.length} alunos com risco elevado</div>
+    <div class="alert-text">Probabilidade superior a 65% de abandono nos próximos 30 dias. Protocolo de intervenção acionado.</div>
+  </div>`;
+
+  h += '<div class="sec"><div class="sec-bar"></div><span class="sec-title">Alunos em Risco — Protocolo Ativo</span></div>';
+  ALUNOS.forEach((a,i) => {
+    const p = PROTO[a.nivel];
+    const rc = a.risco>85?'var(--red)':a.risco>75?'var(--amber)':'#f9a825';
+    h += `<div class="aluno-card" style="border-left:3px solid ${p.cor};animation:slideIn 0.2s ease ${i*0.04}s both">
+      <div class="aluno-top">
+        <div><div class="aluno-id">${a.id}</div><div class="aluno-curso">${a.curso} • ${a.polo}</div></div>
+        <div class="aluno-risco" style="background:${rc}15"><div class="aluno-risco-num" style="color:${rc}">${a.risco}%</div><div class="aluno-risco-label" style="color:${rc}">RISCO</div></div>
+      </div>
+      <div class="aluno-stats">
+        <div><span style="color:var(--muted)">Frequência: </span><strong style="color:${a.freq<55?'var(--red)':'var(--amber)'}">${a.freq}%</strong></div>
+        <div><span style="color:var(--muted)">Dias ausente: </span><strong style="color:${a.dias>7?'var(--red)':'var(--amber)'}">${a.dias}</strong></div>
+      </div>
+      <div class="aluno-proto" style="background:${p.bg}"><span style="font-weight:700;color:${p.cor}">${p.label}: </span><span style="color:var(--text2)">${p.acao}</span></div>
+    </div>`;
+  });
+
+  h += `<div class="fiscal">
+    <div class="fiscal-title">Impacto Fiscal — Recurso PROPAG em Risco</div>
+    <div class="fiscal-grid">
+      <div><div class="fiscal-label">Matrículas em risco</div><div class="fiscal-num" style="color:var(--red)">${ALUNOS.length}</div></div>
+      <div><div class="fiscal-label">Custo médio/matrícula</div><div class="fiscal-num" style="color:var(--amber)">R$ 2.250</div></div>
+      <div class="fiscal-full"><div class="fiscal-label">Recurso em risco (Art. 5°, §2°, VII — LC 212/2025)</div><div class="fiscal-big">R$ ${(ALUNOS.length*2250).toLocaleString('pt-BR')}</div></div>
+    </div>
+  </div>`;
+  document.getElementById('tab-permanencia').innerHTML = h;
+}
+
+// ===== RENDER RELATÓRIO =====
+function renderRelatorio() {
+  let h = '<div class="sec"><div class="sec-bar"></div><span class="sec-title">Prestação de Contas — PROPAG</span></div>';
+  h += `<div class="rel-card">
+    <div class="rel-intro">Art. 7° da LC 212/2025: publicação semestral de balanço ao <strong>TCE-RO</strong> e <strong>Assembleia Legislativa</strong> sobre utilização dos recursos, metas e ações corretivas.</div>
+    <div class="rel-grid">
+      <div class="rel-item"><div class="rel-item-label">Período</div><div class="rel-item-value">Jan–Jun 2026</div></div>
+      <div class="rel-item"><div class="rel-item-label">Destino</div><div class="rel-item-value">TCE-RO / ALERO / DIOF</div></div>
+      <div class="rel-item"><div class="rel-item-label">Base legal</div><div class="rel-item-value">Art. 7° LC 212/2025</div></div>
+      <div class="rel-item"><div class="rel-item-label">Portaria</div><div class="rel-item-value">MEC 930/2025 (Setec)</div></div>
+    </div>
+    <button class="btn-gerar" id="btnGerar" onclick="gerarRelatorio()">Gerar Relatório Semestral PROPAG</button>
+  </div>`;
+  h += '<div id="reportContainer"></div>';
+
+  // Checklist
+  h += `<div class="rel-card"><div style="font-size:11px;font-weight:700;margin-bottom:8px">Checklist de Conformidade PROPAG</div>`;
+  const checks = [
+    ["Matrículas com frequência validada (Censo Escolar)",true],
+    ["Registro digital de presença — todos os polos",true],
+    ["Protocolo PPER ativo e documentado",true],
+    ["Plano de aplicação enviado à Setec/MEC",true],
+    ["60% recursos em EPTNM (Art. 5°, §2°, III)",true],
+    ["Relatório semestral ao TCE-RO (Art. 7°)",false],
+    ["Relatório à Assembleia Legislativa",false],
+    ["Publicação no Diário Oficial",false],
+  ];
+  checks.forEach(([t,ok]) => {
+    h += `<div class="check-item"><span class="check-icon ${ok?'ok':'pending'}">${ok?'✓':'○'}</span><span class="check-text ${ok?'ok':'pending'}">${t}</span></div>`;
+  });
+  h += '</div>';
+  document.getElementById('tab-relatorio').innerHTML = h;
+}
+
+function gerarRelatorio() {
+  const btn = document.getElementById('btnGerar');
+  btn.className = 'btn-gerar done';
+  btn.textContent = '✓ Relatório gerado';
+  const now = new Date();
+  let rows = '';
+  MUNICIPIOS.slice(0,10).forEach(m => {
+    const p = ((m.atual/m.meta)*100).toFixed(0);
+    rows += `<tr><td>${m.name}</td><td>${m.meta}</td><td>${m.atual}</td><td style="font-weight:600">${p}%</td><td style="color:${m.risco>5?'#c62828':'#333'}">${m.risco}</td></tr>`;
+  });
+  document.getElementById('reportContainer').innerHTML = `<div class="report">
+    <div class="report-header">
+      <div class="report-gov">Estado de Rondônia • IDEP / SEDUC</div>
+      <div class="report-title">RELATÓRIO DE PRESTAÇÃO DE CONTAS</div>
+      <div class="report-sub">PROPAG — LC 212/2025 • Portaria MEC 930/2025</div>
+      <div class="report-dest">Jan–Jun 2026 • Destinatário: TCE-RO / ALERO</div>
+    </div>
+    <div class="report-section" style="border-top:2px solid #111">1. RESUMO EXECUTIVO</div>
+    <p class="report-text">O IDEP alcançou <strong>${pct}%</strong> da meta anual EPT, com <strong>${totalAtual.toLocaleString('pt-BR')}</strong> matrículas ativas (frequência validada) de ${totalMeta.toLocaleString('pt-BR')}. O PPER foi implantado em ${MUNICIPIOS.length} municípios com protocolo de intervenção em 3 níveis.</p>
+    <div class="report-section">2. DISTRIBUIÇÃO POR MUNICÍPIO</div>
+    <table><thead><tr><th style="text-align:left">Município</th><th>Meta</th><th>Atual</th><th>%</th><th>Risco</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="report-note">* Resumido. Completo: 52 municípios + 6 escolas móveis.</div>
+    <div class="report-section">3. AÇÕES DE PERMANÊNCIA (PPER)</div>
+    <p class="report-text">Protocolo registrou 47 ações Nível 1, 18 Nível 2 e 8 Nível 3. Taxa de retorno pós-intervenção: 68%.</p>
+    <div class="report-footer"><strong>Gerado automaticamente</strong> — PPER/IDEP em ${now.toLocaleDateString('pt-BR')} • Art. 7° LC 212/2025</div>
+  </div>`;
+}
+
+// ===== INIT =====
+renderComando();
+renderCursos('todos');
+renderPermanencia();
+renderRelatorio();
+</script>
+</body>
+</html>
